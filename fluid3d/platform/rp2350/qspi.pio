@@ -1,0 +1,61 @@
+; QSPI transmit for the AMOLED panel, for the RP2350.
+;
+; The RP2350's QMI is wired to the flash, so there is no hardware QSPI available
+; for a peripheral. This one tiny program synthesises one. It clocks data out on
+; the falling edge and idles the clock low (SPI mode 0), and takes two cycles per
+; nibble, so the bus runs at sys_clk / 2 = 100 MHz.
+;
+; The panel needs two widths on the same wires: commands and addresses go out on
+; D0 alone, pixels go out four bits at a time across D0..D3. There is deliberately
+; only ONE program here, running four bits wide, and single-wire mode is emulated
+; by expanding each command byte into four bytes that only ever set D0 (see
+; write_1wire_byte() in display.c).
+;
+; Doing it that way -- which is what Waveshare's own driver does -- means the
+; state machine is enabled once and never touched again. The obvious alternative,
+; a second one-bit program selected per transfer, requires disabling a state
+; machine that may still be shifting the tail of the previous transfer, which
+; silently corrupts it. Commands are a handful of bytes, so the 4x expansion
+; costs nothing.
+
+.pio_version 0
+
+.program qspi_tx
+.side_set 1
+.wrap_target
+    out pins, 4    side 0
+    nop            side 1
+.wrap
+
+% c-sdk {
+#include "hardware/clocks.h"
+#include "hardware/gpio.h"
+
+// The shift configuration is the part that matters and is easy to get wrong:
+// shift_right = false sends the most significant bit first, which is what SPI
+// wants, and a pull threshold of 8 makes the state machine consume exactly one
+// byte per FIFO word so DMA can stream bytes straight out of the band buffer in
+// memory order.
+static inline void qspi_tx_program_init(PIO pio, uint sm, uint offset,
+                                        uint pin_clk, uint pin_d0, float clkdiv)
+{
+    pio_sm_config c = qspi_tx_program_get_default_config(offset);
+
+    pio_gpio_init(pio, pin_clk);
+    pio_sm_set_consecutive_pindirs(pio, sm, pin_clk, 1, true);
+    sm_config_set_sideset_pins(&c, pin_clk);
+
+    for (uint i = 0; i < 4; i++) {
+        pio_gpio_init(pio, pin_d0 + i);
+    }
+    pio_sm_set_consecutive_pindirs(pio, sm, pin_d0, 4, true);
+    sm_config_set_out_pins(&c, pin_d0, 4);
+
+    sm_config_set_out_shift(&c, false, true, 8);
+    sm_config_set_clkdiv(&c, clkdiv);
+
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_clear_fifos(pio, sm);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}

@@ -1,0 +1,22 @@
+CONFIG_IDF_TARGET="esp32s3"
+
+# 16 MB QIO flash, as fitted on the Waveshare board.
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+
+# 8 MB octal PSRAM. Only used for the cold particle snapshot buffers; every hot
+# array lives in internal SRAM.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+
+# Run both cores flat out.
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+CONFIG_FREERTOS_HZ=1000
+
+# Optimise for speed and keep the FPU usable from any task.
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# Console on the native USB-Serial-JTAG so `idf.py flash/monitor` and the
+# auto-reset used by esptool keep working.
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y

@@ -1,0 +1,61 @@
+# ---------------------------------------------------------------------------
+# Build output
+# ---------------------------------------------------------------------------
+# Both toolchains build out-of-tree into build/, so one rule covers every
+# project here: the two ESP-IDF ones, and the three Pico SDK ones.
+build/
+
+# The Pico SDK generates a C header from each .pio file at build time
+# (qspi.pio.h). It lands in build/ so it is already covered, but the rule is
+# spelled out because a stray copy next to the source is a common mistake and
+# should never be committed -- the .pio file is the source of truth.
+*.pio.h
+
+# Firmware images and build by-products, wherever they end up.
+*.elf
+*.bin
+*.uf2
+*.hex
+*.map
+*.dis
+compile_commands.json
+
+# ---------------------------------------------------------------------------
+# ESP-IDF
+# ---------------------------------------------------------------------------
+# sdkconfig is GENERATED from sdkconfig.defaults on the first build and then
+# rewritten with hundreds of resolved defaults. Committing it makes for
+# unreadable diffs and pins settings that should follow the IDF version.
+# sdkconfig.defaults is the file that actually belongs in the repo, and it is
+# deliberately not ignored -- it is what keeps the console on USB-Serial-JTAG.
+sdkconfig
+sdkconfig.old
+sdkconfig.ci
+
+# Components pulled from the ESP component registry, resolved from
+# idf_component.yml. Re-fetched automatically; large and not ours.
+managed_components/
+dependencies.lock
+
+# ---------------------------------------------------------------------------
+# Backups
+# ---------------------------------------------------------------------------
+# The RP2350's factory firmware dump lives in backup/ and is NOT tracked. It is
+# a property of one physical board rather than of this project, it is Waveshare's
+# firmware rather than ours, and git is not a backup system -- every re-dump
+# would add another permanent blob to history. Keep your own copy somewhere off
+# this machine; see the README for how to take and restore it.
+backup/
+
+# ---------------------------------------------------------------------------
+# Editor and OS noise
+# ---------------------------------------------------------------------------
+# The Pico VS Code extension writes absolute SDK paths into .vscode/, which are
+# machine-specific and break for anyone else.
+.vscode/
+.idea/
+.cache/
+.DS_Store
+*.swp
+*~
+.claude/
