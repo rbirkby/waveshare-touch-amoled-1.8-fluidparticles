@@ -14,6 +14,8 @@ fluid particles live inside it. The accelerometer tells the box which way is dow
 gyroscope tells it how it is spinning, and the fluid responds. Particles are deep blue
 when still and shift through cyan and amber to hot orange-red as they speed up.
 
+**[Watch it running on both boards →](https://youtu.be/0fKXTRx5v20)**
+
 Measured on hardware:
 
 | | physics | rendering | RAM free |
